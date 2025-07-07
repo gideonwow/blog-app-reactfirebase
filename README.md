@@ -1,3 +1,6 @@
+You can visit https://blogbro101.netlify.app/ to see the website.
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
