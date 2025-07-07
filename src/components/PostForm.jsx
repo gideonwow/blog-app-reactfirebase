@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, ArrowLeft } from 'lucide-react';
+import { Link, ArrowLeft } from 'lucide-react';
 
 const DEFAULT_HEADER_IMAGE = 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
 
@@ -10,38 +10,22 @@ const PostForm = ({
   isEditing = false
 }) => {
   const [formData, setFormData] = useState(initialData);
-  const [headerImageFile, setHeaderImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(initialData.headerImageUrl);
+  const [imageUrl, setImageUrl] = useState(initialData.headerImageUrl || DEFAULT_HEADER_IMAGE);
+  const [imageError, setImageError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file');
-        return;
-      }
-      
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
-        return;
-      }
-      
-      setHeaderImageFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.onerror = () => {
-        console.error('Error reading file');
-        alert('Error reading file. Please try again.');
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageUrlChange = (url) => {
+    setImageUrl(url);
+    setImageError(false);
+    setFormData(prev => ({ ...prev, headerImageUrl: url }));
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageError(false);
   };
 
   const handleSubmit = async (e) => {
@@ -59,6 +43,20 @@ const PostForm = ({
       alert('Please enter content');
       return;
     }
+
+    // Validate image URL
+    if (!imageUrl.trim()) {
+      alert('Please enter a header image URL');
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(imageUrl);
+    } catch (error) {
+      alert('Please enter a valid image URL');
+      return;
+    }
     
     setIsSubmitting(true);
     
@@ -66,8 +64,7 @@ const PostForm = ({
       await onSubmit({
         title: formData.title.trim(),
         content: formData.content.trim(),
-        headerImage: headerImageFile,
-        headerImageUrl: imagePreview || formData.headerImageUrl
+        headerImageUrl: imageUrl
       });
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -79,6 +76,10 @@ const PostForm = ({
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleUseDefaultImage = () => {
+    handleImageUrlChange(DEFAULT_HEADER_IMAGE);
   };
 
   return (
@@ -101,43 +102,62 @@ const PostForm = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Header Image
+                Header Image URL *
               </label>
               <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="header-image"
-                    disabled={isSubmitting}
-                  />
-                  <label
-                    htmlFor="header-image"
-                    className={`flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 cursor-pointer ${
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1">
+                    <input
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => handleImageUrlChange(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUseDefaultImage}
+                    className={`flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors ${
                       isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
+                    disabled={isSubmitting}
                   >
-                    <Image size={16} className="mr-2" />
-                    Choose Image
-                  </label>
-                  {headerImageFile && (
-                    <span className="text-sm text-gray-600">
-                      {headerImageFile.name}
-                    </span>
+                    <Link size={16} className="mr-2" />
+                    Use Default
+                  </button>
+                </div>
+                
+                <div className="mt-4">
+                  {imageError ? (
+                    <div className="w-full h-48 bg-red-50 border border-red-200 rounded-md flex items-center justify-center">
+                      <div className="text-center text-red-600">
+                        <p className="text-sm">Failed to load image</p>
+                        <p className="text-xs mt-1">Please check the URL and try again</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={imageUrl}
+                      alt="Header preview"
+                      className="w-full h-48 object-cover rounded-md border"
+                      onError={handleImageError}
+                      onLoad={handleImageLoad}
+                    />
                   )}
                 </div>
                 
-                {imagePreview && (
-                  <div className="mt-4">
-                    <img
-                      src={imagePreview}
-                      alt="Header preview"
-                      className="w-full h-48 object-cover rounded-md border"
-                    />
-                  </div>
-                )}
+                <div className="text-sm text-gray-600">
+                  <p>💡 <strong>Tips for finding good images:</strong></p>
+                  <ul className="mt-1 ml-4 space-y-1">
+                    <li>• Use <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Unsplash</a> for free high-quality photos</li>
+                    <li>• Use <a href="https://pixabay.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Pixabay</a> for free images</li>
+                    <li>• Make sure the image URL ends with .jpg, .png, .gif, or .webp</li>
+                    <li>• Test the URL by pasting it in a new browser tab</li>
+                  </ul>
+                </div>
               </div>
             </div>
 
@@ -179,7 +199,7 @@ const PostForm = ({
             <div className="flex space-x-4">
               <button
                 type="submit"
-                disabled={!formData.title.trim() || !formData.content.trim() || isSubmitting}
+                disabled={!formData.title.trim() || !formData.content.trim() || !imageUrl.trim() || imageError || isSubmitting}
                 className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {isSubmitting 

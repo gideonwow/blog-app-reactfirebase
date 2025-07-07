@@ -12,7 +12,6 @@ import {
   updateUserProfile,
   updateUserPostsDisplayName
 } from './firestore';
-import { uploadImage } from './storage';
 import PostList from './components/PostList';
 import PostForm from './components/PostForm';
 import PostDetail from './components/PostDetail';
@@ -75,9 +74,9 @@ const App = () => {
       if (user) {
         try {
           console.log('Loading user posts...');
-          const userPostsData = await getUserPosts(user.uid);
-          console.log('Loaded user posts:', userPostsData);
-          setUserPosts(userPostsData);
+          const posts = await getUserPosts(user.uid);
+          console.log('Loaded user posts:', posts);
+          setUserPosts(posts);
         } catch (error) {
           console.error('Error loading user posts:', error);
         }
@@ -123,18 +122,10 @@ const App = () => {
   // Handle create post
   const handleCreatePost = async (postData) => {
     try {
-      let headerImageUrl = postData.headerImageUrl;
-      
-      // Upload header image if provided
-      if (postData.headerImage) {
-        const imagePath = `posts/${Date.now()}_${postData.headerImage.name}`;
-        headerImageUrl = await uploadImage(postData.headerImage, imagePath);
-      }
-
       const newPostData = {
         title: postData.title,
         content: postData.content,
-        headerImageUrl: headerImageUrl
+        headerImageUrl: postData.headerImageUrl
       };
 
       await createPost(newPostData, user.uid, user.displayName);
@@ -142,8 +133,8 @@ const App = () => {
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPostsData = await getUserPosts(user.uid);
-        setUserPosts(userPostsData);
+        const userPosts = await getUserPosts(user.uid);
+        setUserPosts(userPosts);
       }
       
       setShowCreatePost(false);
@@ -156,18 +147,10 @@ const App = () => {
   // Handle update post
   const handleUpdatePost = async (postData) => {
     try {
-      let headerImageUrl = postData.headerImageUrl;
-      
-      // Upload header image if provided
-      if (postData.headerImage) {
-        const imagePath = `posts/${Date.now()}_${postData.headerImage.name}`;
-        headerImageUrl = await uploadImage(postData.headerImage, imagePath);
-      }
-
       const updatedPostData = {
         title: postData.title,
         content: postData.content,
-        headerImageUrl: headerImageUrl
+        headerImageUrl: postData.headerImageUrl
       };
 
       await updatePost(editingPost.id, updatedPostData);
@@ -175,8 +158,8 @@ const App = () => {
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPostsData = await getUserPosts(user.uid);
-        setUserPosts(userPostsData);
+        const userPosts = await getUserPosts(user.uid);
+        setUserPosts(userPosts);
       }
       
       setEditingPost(null);
@@ -196,11 +179,11 @@ const App = () => {
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPostsData = await getUserPosts(user.uid);
-        setUserPosts(userPostsData);
+        const userPosts = await getUserPosts(user.uid);
+        setUserPosts(userPosts);
       }
       
-      // If viewing the deleted post, go back to list
+      // If we're viewing the deleted post, go back to list
       if (selectedPost && selectedPost.id === postId) {
         setSelectedPost(null);
       }
@@ -253,8 +236,8 @@ const App = () => {
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPostsData = await getUserPosts(user.uid);
-        setUserPosts(userPostsData);
+        const userPosts = await getUserPosts(user.uid);
+        setUserPosts(userPosts);
       }
       
       // Update selected post if it's by this user
