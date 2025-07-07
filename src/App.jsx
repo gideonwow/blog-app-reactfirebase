@@ -147,9 +147,15 @@ const App = () => {
         headerImageUrl: headerImageUrl
       };
 
-      await createPost(newPostData, user.uid, user.displayName);
-      const allPosts = await getAllPosts();
-      setPosts(allPosts);
+      await createPost({
+  title: postData.title,
+  content: postData.content,
+  headerImageUrl: headerImageUrl
+}, user.uid, user.displayName);
+
+const allPosts = await getAllPosts();
+setPosts(allPosts);
+
       
       if (currentPage === 'myPosts') {
         const userPosts = await getUserPosts(user.uid);
