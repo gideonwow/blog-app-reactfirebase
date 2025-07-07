@@ -89,13 +89,23 @@ const App = () => {
 
   // Handle sign in
   const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Error signing in:', error);
-      setError('Failed to sign in');
+  try {
+    setError(null); // Clear any previous errors
+    console.log('Starting sign in process...');
+    
+    const result = await signInWithGoogle();
+    console.log('Sign in completed successfully');
+    
+  } catch (error) {
+    console.error('Sign in failed:', error);
+    setError(error.message || 'Failed to sign in. Please try again.');
+    
+    if (error.message.includes('popup')) {
+      console.log('Popup issue detected');
     }
-  };
+  }
+};
+
 
   // Handle sign out
   const handleSignOutClick = async () => {
