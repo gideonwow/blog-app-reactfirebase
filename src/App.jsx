@@ -75,9 +75,9 @@ const App = () => {
       if (user) {
         try {
           console.log('Loading user posts...');
-          const posts = await getUserPosts(user.uid);
-          console.log('Loaded user posts:', posts);
-          setUserPosts(posts);
+          const userPostsData = await getUserPosts(user.uid);
+          console.log('Loaded user posts:', userPostsData);
+          setUserPosts(userPostsData);
         } catch (error) {
           console.error('Error loading user posts:', error);
         }
@@ -89,23 +89,13 @@ const App = () => {
 
   // Handle sign in
   const handleSignIn = async () => {
-  try {
-    setError(null); // Clear any previous errors
-    console.log('Starting sign in process...');
-    
-    const result = await signInWithGoogle();
-    console.log('Sign in completed successfully');
-    
-  } catch (error) {
-    console.error('Sign in failed:', error);
-    setError(error.message || 'Failed to sign in. Please try again.');
-    
-    if (error.message.includes('popup')) {
-      console.log('Popup issue detected');
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error('Error signing in:', error);
+      setError('Failed to sign in');
     }
-  }
-};
-
+  };
 
   // Handle sign out
   const handleSignOutClick = async () => {
@@ -147,19 +137,13 @@ const App = () => {
         headerImageUrl: headerImageUrl
       };
 
-      await createPost({
-  title: postData.title,
-  content: postData.content,
-  headerImageUrl: headerImageUrl
-}, user.uid, user.displayName);
-
-const allPosts = await getAllPosts();
-setPosts(allPosts);
-
+      await createPost(newPostData, user.uid, user.displayName);
+      const allPosts = await getAllPosts();
+      setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPosts = await getUserPosts(user.uid);
-        setUserPosts(userPosts);
+        const userPostsData = await getUserPosts(user.uid);
+        setUserPosts(userPostsData);
       }
       
       setShowCreatePost(false);
@@ -191,8 +175,8 @@ setPosts(allPosts);
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPosts = await getUserPosts(user.uid);
-        setUserPosts(userPosts);
+        const userPostsData = await getUserPosts(user.uid);
+        setUserPosts(userPostsData);
       }
       
       setEditingPost(null);
@@ -212,8 +196,8 @@ setPosts(allPosts);
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPosts = await getUserPosts(user.uid);
-        setUserPosts(userPosts);
+        const userPostsData = await getUserPosts(user.uid);
+        setUserPosts(userPostsData);
       }
       
       // If viewing the deleted post, go back to list
@@ -269,8 +253,8 @@ setPosts(allPosts);
       setPosts(allPosts);
       
       if (currentPage === 'myPosts') {
-        const userPosts = await getUserPosts(user.uid);
-        setUserPosts(userPosts);
+        const userPostsData = await getUserPosts(user.uid);
+        setUserPosts(userPostsData);
       }
       
       // Update selected post if it's by this user
